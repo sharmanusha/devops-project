@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -20,24 +20,23 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
-      - name: Login to Amazon ECR
-        id: login-ecr
+      - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build Backend Image
+      - name: Build Backend
         run: docker build -t backend ./backend
 
-      - name: Tag Backend Image
-        run: docker tag backend:latest ${{ steps.login-ecr.outputs.registry }}/backend:latest
+      - name: Tag Backend
+        run: docker tag backend:latest 219602684384.dkr.ecr.ap-south-1.amazonaws.com/backend:latest
 
-      - name: Push Backend Image
-        run: docker push ${{ steps.login-ecr.outputs.registry }}/backend:latest
+      - name: Push Backend
+        run: docker push 219602684384.dkr.ecr.ap-south-1.amazonaws.com/backend:latest
 
-      - name: Build Frontend Image
+      - name: Build Frontend
         run: docker build -t frontend ./frontend
 
-      - name: Tag Frontend Image
-        run: docker tag frontend:latest ${{ steps.login-ecr.outputs.registry }}/frontend:latest
+      - name: Tag Frontend
+        run: docker tag frontend:latest 219602684384.dkr.ecr.ap-south-1.amazonaws.com/frontend:latest
 
-      - name: Push Frontend Image
-        run: docker push ${{ steps.login-ecr.outputs.registry }}/frontend:latest
+      - name: Push Frontend
+        run: docker push 219602684384.dkr.ecr.ap-south-1.amazonaws.com/frontend:latest
