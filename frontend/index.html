@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Kube Monitor</title>
+</head>
+<body>
+
+<h1>Kubernetes Monitor</h1>
+<div id="pods">Loading...</div>
+
+<script>
+async function fetchPods() {
+  try {
+    const res = await fetch('http://localhost:5001/pods');
+    const data = await res.json();
+
+    let html = '';
+
+    if (data.message) {
+      html = data.message;
+    } else {
+      data.forEach(p => {
+        html += `<p>${p.name} - ${p.status} - Restarts: ${p.restarts}</p>`;
+      });
+    }
+
+    document.getElementById('pods').innerHTML = html;
+
+  } catch (e) {
+    document.getElementById('pods').innerHTML = "Backend not reachable";
+  }
+}
+
+setInterval(fetchPods, 3000);
+fetchPods();
+</script>
+
+</body>
+</html>
