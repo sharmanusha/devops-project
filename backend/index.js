@@ -5,6 +5,10 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 
+app.get('/', (req, res) => {
+  res.send("Backend is running 🚀");
+});
+
 app.get('/pods', (req, res) => {
   exec('kubectl get pods -o json', (err, stdout) => {
     if (err) {

@@ -11,7 +11,7 @@
 <script>
 async function fetchPods() {
   try {
-    const res = await fetch('http://localhost:5001/pods');
+    const res = await fetch('http://127.0.0.1:53659/pods');
     const data = await res.json();
 
     let html = '';
