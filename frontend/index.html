@@ -11,28 +11,35 @@
 <script>
 async function fetchPods() {
   try {
-    const res = await fetch('http://127.0.0.1:53659/pods');
+    
+    const res = await fetch('http://a078947ce23f84f828d43c2a8acc69ee-1183204755.ap-south-1.elb.amazonaws.com/pods?_=' + new Date().getTime());
+
     const data = await res.json();
 
     let html = '';
 
     if (data.message) {
       html = data.message;
-    } else {
+    } else if (Array.isArray(data)) {
       data.forEach(p => {
         html += `<p>${p.name} - ${p.status} - Restarts: ${p.restarts}</p>`;
       });
+    } else {
+      html = "Unexpected response";
     }
 
     document.getElementById('pods').innerHTML = html;
 
   } catch (e) {
+    console.error(e);
     document.getElementById('pods').innerHTML = "Backend not reachable";
   }
 }
 
-setInterval(fetchPods, 3000);
 fetchPods();
+
+
+setInterval(fetchPods, 3000);
 </script>
 
 </body>

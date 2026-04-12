@@ -1,36 +1,60 @@
 const express = require('express');
-const { exec } = require('child_process');
 const cors = require('cors');
+const https = require('https');
+const fs = require('fs');
 
 const app = express();
 app.use(cors());
 
-app.get('/', (req, res) => {
-  res.send("Backend is running 🚀");
-});
+const KUBE_API = 'kubernetes.default.svc';
+const TOKEN = fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/token');
+const CA = fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/ca.crt');
 
 app.get('/pods', (req, res) => {
-  exec('kubectl get pods -o json', (err, stdout) => {
-    if (err) {
-      return res.status(500).json({
-        message: "Kubernetes not connected yet"
-      });
-    }
 
-    try {
-      const data = JSON.parse(stdout);
+  const options = {
+    hostname: KUBE_API,
+    port: 443,
+    path: '/api/v1/namespaces/default/pods',
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${TOKEN}`
+    },
+    ca: CA
+  };
 
-      const pods = data.items.map(pod => ({
+  const request = https.request(options, response => {
+    let data = '';
+
+    response.on('data', chunk => {
+      data += chunk;
+    });
+
+    response.on('end', () => {
+      const parsed = JSON.parse(data);
+
+      const pods = parsed.items.map(pod => ({
         name: pod.metadata.name,
         status: pod.status.phase,
-        restarts: pod.status.containerStatuses?.[0]?.restartCount || 0
+        restarts:
+          pod.status.containerStatuses &&
+          pod.status.containerStatuses.length > 0
+            ? pod.status.containerStatuses[0].restartCount
+            : 0
       }));
 
       res.json(pods);
-    } catch (e) {
-      res.status(500).json({ error: "Parsing error" });
-    }
+    });
   });
+
+  request.on('error', err => {
+    console.error(err);
+    res.json({ message: 'Error connecting to Kubernetes API' });
+  });
+
+  request.end();
 });
 
-app.listen(5001, () => console.log("Backend running on 5001"));
+app.listen(5001, '0.0.0.0', () => {
+  console.log("Backend running");
+});
