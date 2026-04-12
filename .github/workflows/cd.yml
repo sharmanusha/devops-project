@@ -1,18 +1,22 @@
 name: CD Pipeline
 
 on:
-  push:
-    branches: ["main"]
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types:
+      - completed
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
     steps:
-    - name: Checkout code
+    - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Configure AWS Credentials
+    - name: Configure AWS
       uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
@@ -23,7 +27,7 @@ jobs:
       run: |
         aws eks update-kubeconfig --region ap-south-1 --name anusha-eks
 
-    - name: Deploy to EKS
+    - name: Deploy
       run: |
         kubectl apply -f k8s/backend-deployment.yaml
-        kubectl apply -f k8s/backend-service.yaml
+
