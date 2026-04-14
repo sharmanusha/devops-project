@@ -11,21 +11,21 @@
 <script>
 async function fetchPods() {
   try {
-    
-    const res = await fetch('http://a078947ce23f84f828d43c2a8acc69ee-1183204755.ap-south-1.elb.amazonaws.com/pods?_=' + new Date().getTime());
+
+    const res = await fetch('http://ae4e0bc0b553a44d496187094a3ab710-1030668782.ap-south-1.elb.amazonaws.com/pods?_=' + new Date().getTime());
 
     const data = await res.json();
 
     let html = '';
 
-    if (data.message) {
-      html = data.message;
-    } else if (Array.isArray(data)) {
+    if (Array.isArray(data)) {
       data.forEach(p => {
         html += `<p>${p.name} - ${p.status} - Restarts: ${p.restarts}</p>`;
       });
+    } else if (data.message) {
+      html = data.message;
     } else {
-      html = "Unexpected response";
+      html = "No data";
     }
 
     document.getElementById('pods').innerHTML = html;
@@ -37,8 +37,6 @@ async function fetchPods() {
 }
 
 fetchPods();
-
-
 setInterval(fetchPods, 3000);
 </script>
 

@@ -7,11 +7,15 @@ const app = express();
 app.use(cors());
 
 const KUBE_API = 'kubernetes.default.svc';
+
 const TOKEN = fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/token');
 const CA = fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/ca.crt');
 
-app.get('/pods', (req, res) => {
+app.get('/', (req, res) => {
+  res.send("Backend is running");
+});
 
+app.get('/pods', (req, res) => {
   const options = {
     hostname: KUBE_API,
     port: 443,
@@ -31,30 +35,39 @@ app.get('/pods', (req, res) => {
     });
 
     response.on('end', () => {
-      const parsed = JSON.parse(data);
+      try {
+        const parsed = JSON.parse(data);
 
-      const pods = parsed.items.map(pod => ({
-        name: pod.metadata.name,
-        status: pod.status.phase,
-        restarts:
-          pod.status.containerStatuses &&
-          pod.status.containerStatuses.length > 0
-            ? pod.status.containerStatuses[0].restartCount
-            : 0
-      }));
+        if (!parsed.items) {
+          return res.json([]);
+        }
 
-      res.json(pods);
+        const pods = parsed.items.map(pod => ({
+          name: pod.metadata?.name || "N/A",
+          status: pod.status?.phase || "Unknown",
+          restarts:
+            pod.status?.containerStatuses &&
+            pod.status.containerStatuses.length > 0
+              ? pod.status.containerStatuses[0].restartCount
+              : 0
+        }));
+
+        res.json(pods);
+      } catch (error) {
+        console.error("Parsing error:", error);
+        res.json([]);
+      }
     });
   });
 
   request.on('error', err => {
-    console.error(err);
-    res.json({ message: 'Error connecting to Kubernetes API' });
+    console.error("Kubernetes API error:", err);
+    res.json([]);
   });
 
   request.end();
 });
 
 app.listen(5001, '0.0.0.0', () => {
-  console.log("Backend running");
+  console.log("Backend running on port 5001 ");
 });
